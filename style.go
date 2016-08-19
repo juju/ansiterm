@@ -12,6 +12,7 @@ const (
 	Blink
 	Reverse
 	Strikethrough
+	Conceal
 )
 
 type Style int
@@ -32,6 +33,8 @@ func (s Style) String() string {
 		return "reverse"
 	case Strikethrough:
 		return "strikethrough"
+	case Conceal:
+		return "conceal"
 	default:
 		return ""
 	}
@@ -51,6 +54,8 @@ func (s Style) enable() attribute {
 		return 5
 	case Reverse:
 		return 7
+	case Conceal:
+		return 8
 	case Strikethrough:
 		return 9
 	default:
