@@ -3,7 +3,10 @@
 
 package ansiterm
 
-import "fmt"
+import (
+	"fmt"
+	"io"
+)
 
 // Context provides a way to specify both foreground and background colors
 // along with other styles and write text to a Writer with those colors and
@@ -50,12 +53,28 @@ func (c *Context) SetStyle(styles ...Style) *Context {
 	return c
 }
 
+type sgrWriter interface {
+	io.Writer
+	writeSGR(value sgr)
+}
+
 // Fprintf will set the sgr values of the writer to the specified
 // foreground, background and styles, then write the formatted string,
 // then reset the writer.
-func (c *Context) Fprintf(w *Writer, format string, args ...interface{}) {
+func (c *Context) Fprintf(w sgrWriter, format string, args ...interface{}) {
 	w.writeSGR(c)
 	fmt.Fprintf(w, format, args...)
+	w.writeSGR(reset)
+}
+
+// Fprint will set the sgr values of the writer to the specified foreground,
+// background and styles, then formats using the default formats for its
+// operands and writes to w. Spaces are added between operands when neither is
+// a string. It returns the number of bytes written and any write error
+// encountered.
+func (c *Context) Fprint(w sgrWriter, args ...interface{}) {
+	w.writeSGR(c)
+	fmt.Fprint(w, args...)
 	w.writeSGR(reset)
 }
 

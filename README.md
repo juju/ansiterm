@@ -102,9 +102,21 @@ specified styles set.
 
 
 
+### func (\*Context) Fprint
+``` go
+func (c *Context) Fprint(w sgrWriter, args ...interface{})
+```
+Fprint will set the sgr values of the writer to the specified foreground,
+background and styles, then formats using the default formats for its
+operands and writes to w. Spaces are added between operands when neither is
+a string. It returns the number of bytes written and any write error
+encountered.
+
+
+
 ### func (\*Context) Fprintf
 ``` go
-func (c *Context) Fprintf(w *Writer, format string, args ...interface{})
+func (c *Context) Fprintf(w sgrWriter, format string, args ...interface{})
 ```
 Fprintf will set the sgr values of the writer to the specified
 foreground, background and styles, then write the formatted string,
@@ -151,6 +163,7 @@ const (
     Blink
     Reverse
     Strikethrough
+    Conceal
 )
 ```
 
@@ -165,6 +178,69 @@ const (
 ``` go
 func (s Style) String() string
 ```
+
+
+## type TabWriter
+``` go
+type TabWriter struct {
+    Writer
+    // contains filtered or unexported fields
+}
+```
+TabWriter is a filter that inserts padding around tab-delimited
+columns in its input to align them in the output.
+
+It also setting of colors and styles over and above the standard
+tabwriter package.
+
+
+
+
+
+
+
+
+
+### func NewTabWriter
+``` go
+func NewTabWriter(output io.Writer, minwidth, tabwidth, padding int, padchar byte, flags uint) *TabWriter
+```
+NewTabWriter returns a writer that is able to set colors and styels.
+The ansi escape codes are stripped for width calculations.
+
+
+
+
+### func (\*TabWriter) Flush
+``` go
+func (t *TabWriter) Flush() error
+```
+Flush should be called after the last call to Write to ensure
+that any data buffered in the Writer is written to output. Any
+incomplete escape sequence at the end is considered
+complete for formatting purposes.
+
+
+
+### func (\*TabWriter) Init
+``` go
+func (t *TabWriter) Init(output io.Writer, minwidth, tabwidth, padding int, padchar byte, flags uint) *TabWriter
+```
+A Writer must be initialized with a call to Init. The first parameter (output)
+specifies the filter output. The remaining parameters control the formatting:
+
+
+	minwidth	minimal cell width including any padding
+	tabwidth	width of tab characters (equivalent number of spaces)
+	padding		padding added to a cell before computing its width
+	padchar		ASCII char used for padding
+			if padchar == '\t', the Writer will assume that the
+			width of a '\t' in the formatted output is tabwidth,
+			and cells are left-aligned independent of align_left
+			(for correct-looking results, tabwidth must correspond
+			to the tab width in the viewer displaying the result)
+	flags		formatting control
+
 
 
 ## type Writer
@@ -184,14 +260,6 @@ styles are no-ops.
 
 
 
-
-
-### func NewTabWriter
-``` go
-func NewTabWriter(output io.Writer, minwidth, tabwidth, padding int, padchar byte, flags uint) *Writer
-```
-NewTabWriter returns a writer that is able to set colors and styels.
-The ansi escape codes are stripped for width calculations.
 
 
 ### func NewWriter
