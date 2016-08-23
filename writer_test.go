@@ -27,6 +27,18 @@ func (*writerSuite) TestNoColor(c *gc.C) {
 	c.Check(buff.String(), gc.Equals, "")
 }
 
+func (*writerSuite) TestSetColorCapable(c *gc.C) {
+	buff := &bytes.Buffer{}
+	writer := NewWriter(buff)
+	c.Check(writer.noColor, gc.Equals, true)
+
+	writer.SetColorCapable(true)
+	c.Check(writer.noColor, gc.Equals, false)
+
+	writer.SetColorCapable(false)
+	c.Check(writer.noColor, gc.Equals, true)
+}
+
 func (*writerSuite) newWriter() (*bytes.Buffer, *Writer) {
 	buff := &bytes.Buffer{}
 	writer := NewWriter(buff)
