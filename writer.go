@@ -28,6 +28,12 @@ func NewWriter(w io.Writer) *Writer {
 	}
 }
 
+// SetColorCapable forces the writer to either write the ANSI escape color
+// if capable is true, or to not write them if capable is false.
+func (w *Writer) SetColorCapable(capable bool) {
+	w.noColor = !capable
+}
+
 // SetForeground sets the foreground color.
 func (w *Writer) SetForeground(c Color) {
 	w.writeSGR(c.foreground())
@@ -54,6 +60,7 @@ func (w *Writer) Reset() {
 }
 
 type sgr interface {
+	// sgr returns the combined escape sequence for the Select Graphic Rendition.
 	sgr() string
 }
 
