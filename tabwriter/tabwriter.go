@@ -89,12 +89,13 @@ type Writer struct {
 	flags    uint
 
 	// current state
-	buf     bytes.Buffer // collected text excluding tabs or line breaks
-	pos     int          // buffer position up to which cell.width of incomplete cell has been computed
-	cell    cell         // current incomplete cell; cell.width is up to buf[pos] excluding ignored sections
-	endChar byte         // terminating char of escaped sequence (Escape for escapes, '>', ';' for HTML tags/entities, or 0)
-	lines   [][]cell     // list of lines; each line is a list of cells
-	widths  []int        // list of column widths in runes - re-used during formatting
+	buf       bytes.Buffer // collected text excluding tabs or line breaks
+	pos       int          // buffer position up to which cell.width of incomplete cell has been computed
+	cell      cell         // current incomplete cell; cell.width is up to buf[pos] excluding ignored sections
+	endChar   byte         // terminating char of escaped sequence (Escape for escapes, '>', ';' for HTML tags/entities, or 0)
+	lines     [][]cell     // list of lines; each line is a list of cells
+	widths    []int        // list of column widths in runes - re-used during formatting
+	alignment map[int]uint // column alignment
 }
 
 func (b *Writer) addLine() { b.lines = append(b.lines, []cell{}) }
@@ -107,6 +108,7 @@ func (b *Writer) reset() {
 	b.endChar = 0
 	b.lines = b.lines[0:0]
 	b.widths = b.widths[0:0]
+	b.alignment = make(map[int]uint)
 	b.addLine()
 }
 
@@ -283,12 +285,24 @@ func (b *Writer) writeLines(pos0 int, line0, line1 int) (pos int) {
 			} else {
 				// non-empty cell
 				useTabs = false
-				if b.flags&AlignRight == 0 { // align left
+				alignColumnRight := b.alignment[j] == AlignRight
+				if (b.flags&AlignRight == 0) && !alignColumnRight { // align left
 					b.write0(b.buf.Bytes()[pos : pos+c.size])
 					pos += c.size
 					if j < len(b.widths) {
 						b.writePadding(c.width, b.widths[j], false)
 					}
+				} else if alignColumnRight {
+					// just this column
+					internalSize := b.widths[j] - b.padding
+					if j < len(b.widths) {
+						b.writePadding(c.width, internalSize, false)
+					}
+					b.write0(b.buf.Bytes()[pos : pos+c.size])
+					if b.padding > 0 {
+						b.writePadding(0, b.padding, false)
+					}
+					pos += c.size
 				} else { // align right
 					if j < len(b.widths) {
 						b.writePadding(c.width, b.widths[j], false)
@@ -478,6 +492,12 @@ func (b *Writer) Flush() (err error) {
 }
 
 var hbar = []byte("---\n")
+
+// SetColumnAlignRight will mark a particular column as align right.
+// This is reset on the next flush.
+func (b *Writer) SetColumnAlignRight(column int) {
+	b.alignment[column] = AlignRight
+}
 
 // Write writes buf to the writer b.
 // The only errors returned are ones encountered

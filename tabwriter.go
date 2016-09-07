@@ -34,6 +34,12 @@ func (t *TabWriter) Flush() error {
 	return t.tw.Flush()
 }
 
+// SetColumnAlignRight will mark a particular column as align right.
+// This is reset on the next flush.
+func (t *TabWriter) SetColumnAlignRight(column int) {
+	t.tw.SetColumnAlignRight(column)
+}
+
 // A Writer must be initialized with a call to Init. The first parameter (output)
 // specifies the filter output. The remaining parameters control the formatting:
 //
