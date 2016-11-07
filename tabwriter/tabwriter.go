@@ -292,7 +292,7 @@ func (b *Writer) writeLines(pos0 int, line0, line1 int) (pos int) {
 					if j < len(b.widths) {
 						b.writePadding(c.width, b.widths[j], false)
 					}
-				} else if alignColumnRight {
+				} else if alignColumnRight && j < len(b.widths) {
 					// just this column
 					internalSize := b.widths[j] - b.padding
 					if j < len(b.widths) {
