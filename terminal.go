@@ -6,6 +6,8 @@ package ansiterm
 import (
 	"io"
 	"os"
+	"strconv"
+	"strings"
 
 	"github.com/mattn/go-colorable"
 	"github.com/mattn/go-isatty"
@@ -20,6 +22,12 @@ func colorEnabledWriter(w io.Writer) (io.Writer, bool) {
 	if !ok {
 		return w, false
 	}
+	// NO_COLOR is a relatively new standard for preventing color enabled
+	// writers rather than using the TERM env.
+	// See: https://no-color.org/
+	if truthy(os.Getenv("NO_COLOR")) {
+		return w, false
+	}
 	// Check the TERM environment variable specifically
 	// to check for "dumb" terminals.
 	if os.Getenv("TERM") == "dumb" {
@@ -29,4 +37,14 @@ func colorEnabledWriter(w io.Writer) (io.Writer, bool) {
 		return w, false
 	}
 	return colorable.NewColorable(f), true
+}
+
+func truthy(value string) bool {
+	if v := strings.ToLower(value); v == "y" || v == "true" {
+		return true
+	}
+	if num, _ := strconv.Atoi(value); num > 0 {
+		return true
+	}
+	return false
 }
