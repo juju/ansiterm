@@ -19,10 +19,12 @@ func (s *colorWriterSuite) TestNoColor(c *gc.C) {
 	c.Assert(err, gc.IsNil)
 
 	os.Setenv("NO_COLOR", "")
+	defer os.Unsetenv("NO_COLOR")
 
 	writer, ok := colorEnabledWriter(file)
 	c.Assert(ok, gc.Equals, false)
 	c.Assert(writer, gc.Equals, file)
+
 }
 
 func (s *colorWriterSuite) TestNoColorEvenIfFalse(c *gc.C) {
@@ -30,6 +32,7 @@ func (s *colorWriterSuite) TestNoColorEvenIfFalse(c *gc.C) {
 	c.Assert(err, gc.IsNil)
 
 	os.Setenv("NO_COLOR", "false")
+	defer os.Unsetenv("NO_COLOR")
 
 	writer, ok := colorEnabledWriter(file)
 	c.Assert(ok, gc.Equals, false)
