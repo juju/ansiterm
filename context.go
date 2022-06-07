@@ -93,3 +93,8 @@ func (c *Context) sgr() string {
 	}
 	return values.sgr()
 }
+
+//SGR returns formatted string containing its respective ansi escape codes.
+func (c *Context) SGR() string {
+	return c.sgr()
+}
