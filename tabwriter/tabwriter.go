@@ -16,9 +16,9 @@ package tabwriter
 import (
 	"fmt"
 	"io"
-	"unicode/utf8"
 
 	"github.com/lunixbochs/vtclean"
+	"github.com/mattn/go-runewidth"
 )
 
 // ----------------------------------------------------------------------------
@@ -30,7 +30,7 @@ import (
 // ('\t') terminated cell.
 type cell struct {
 	size  int  // cell size in bytes
-	width int  // cell width in runes
+	width int  // cell width
 	htab  bool // true if the cell is terminated by an htab ('\t')
 }
 
@@ -44,8 +44,8 @@ type cell struct {
 //
 // Tab-terminated cells in contiguous lines constitute a column. The
 // Writer inserts padding as needed to make all cells in a column have
-// the same width, effectively aligning the columns. It assumes that
-// all characters have the same width, except for tabs for which a
+// the same width, effectively aligning the columns. All characters
+// have standard unicode terminal widths, except for tabs for which a
 // tabwidth must be specified. Column cells must be tab-terminated, not
 // tab-separated: non-tab terminated trailing text at the end of a line
 // forms a cell but that cell is not part of an aligned column.
@@ -59,10 +59,6 @@ type cell struct {
 // the b and c are in distinct columns (the b column is not contiguous
 // all the way). The d and e are not in a column at all (there's no
 // terminating tab, nor would the column be contiguous).
-//
-// The Writer assumes that all Unicode code points have the same width;
-// this may not be true in some fonts or if the string contains combining
-// characters.
 //
 // If [DiscardEmptyColumns] is set, empty columns that are terminated
 // entirely by vertical (or "soft") tabs are discarded. Columns
@@ -155,9 +151,9 @@ func (b *Writer) reset() {
 // - at any given time there is a (possibly empty) incomplete cell at the end
 //   (the cell starts after a tab or line break)
 // - cell.size is the number of bytes belonging to the cell so far
-// - cell.width is text width in runes of that cell from the start of the cell to
-//   position pos; html tags and entities are excluded from this width if html
-//   filtering is enabled
+// - cell.width is the width of the graphemes of that cell from the start of the
+//   cell to position pos; html tags and entities are excluded from this width
+//   if html filtering is enabled
 // - the sizes and widths of processed text are kept in the lines list
 //   which contains a list of cells for each line
 // - the widths list is a temporary list with current widths used during
@@ -435,7 +431,7 @@ func (b *Writer) updateWidth() {
 	// ---- Changes here -----
 	newChars := b.buf[b.pos:]
 	cleaned := vtclean.Clean(string(newChars), false) // false to strip colors
-	b.cell.width += utf8.RuneCount([]byte(cleaned))
+	b.cell.width += runewidth.StringWidth(cleaned)
 	// --- end of changes ----
 	b.pos = len(b.buf)
 }
